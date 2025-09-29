@@ -113,7 +113,7 @@ struct MenuView: View {
       }
 
       // Playback progress
-      playbackProgressView
+      // playbackProgressView - temporary disabled as media-control has a wrong elapsed time
 
       // Additional metadata
       metadataView

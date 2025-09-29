@@ -124,9 +124,9 @@ class MenuBarManager: ObservableObject {
 
       if media.isPlaying {
         tooltip += "Status: Playing"
-        if let elapsed = media.elapsedTime, let duration = media.duration {
-          tooltip += " (\(media.formattedElapsedTime) / \(media.formattedDuration))"
-        }
+        // if let elapsed = media.elapsedTime, let duration = media.duration {
+        //   tooltip += " (\(media.formattedElapsedTime) / \(media.formattedDuration))"
+        // }
       } else {
         tooltip += "Status: Paused"
       }
