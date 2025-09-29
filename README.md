@@ -92,7 +92,7 @@ brew install media-control@0.7.2
 
 ### Menu Bar Display
 
-- **No Media**: Shows "♪ No Media" when nothing is playing
+- **No Media**: Shows "♪" when nothing is playing
 - **Loading**: Shows "♪ Loading..." while fetching information
 - **Playing**: Shows "♪ Artist - Song Title" (truncated to fit)
 - **Error**: Shows "♪ Error" if there's an issue
@@ -266,7 +266,7 @@ SwiftMediaBar/
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## Acknowledgments
 

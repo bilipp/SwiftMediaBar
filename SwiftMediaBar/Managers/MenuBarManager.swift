@@ -106,7 +106,7 @@ class MenuBarManager: ObservableObject {
       let truncatedText = mediaService.currentMedia.truncatedMenuBarText
       return "♪ \(truncatedText)"
     } else {
-      return "♪ No Media"
+      return "♪"
     }
   }
 
