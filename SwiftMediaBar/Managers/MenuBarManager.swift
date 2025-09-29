@@ -37,7 +37,10 @@ class MenuBarManager: ObservableObject {
 
     // Configure the status item button
     if let button = statusItem.button {
-      button.title = "♪ Loading..."
+      // Use SF Symbol instead of text
+      button.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "Music")
+      button.imagePosition = .imageLeading
+      button.title = " Loading..."
       button.action = #selector(statusItemClicked)
       button.target = self
       button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -99,14 +102,14 @@ class MenuBarManager: ObservableObject {
 
   private func generateStatusTitle() -> String {
     if mediaService.isLoading {
-      return "♪ Loading..."
+      return " Loading..."
     } else if let error = mediaService.lastError {
-      return "♪ Error"
+      return " Error"
     } else if mediaService.hasValidMedia {
       let truncatedText = mediaService.currentMedia.truncatedMenuBarText
-      return "♪ \(truncatedText)"
+      return " \(truncatedText)"
     } else {
-      return "♪"
+      return ""
     }
   }
 
