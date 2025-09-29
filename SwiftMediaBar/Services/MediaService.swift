@@ -73,8 +73,8 @@ class MediaService: ObservableObject {
       let process = Process()
       let pipe = Pipe()
 
-      process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-      process.arguments = ["media-control", "get"]
+      process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/media-control")
+      process.arguments = ["get"]
       process.standardOutput = pipe
       process.standardError = pipe
 
