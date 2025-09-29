@@ -271,6 +271,7 @@ This project is licensed under the MIT License.
 ## Acknowledgments
 
 - [ungive/media-control](https://github.com/ungive/media-control) - Essential command-line tool that makes this app possible
+- [menubar-ticker](https://github.com/serban/menubar-ticker) - General idea of a menu bar media ticker
 - Apple's MediaRemote framework - Underlying technology for media information access
 - The Swift and SwiftUI communities for excellent documentation and examples
 
