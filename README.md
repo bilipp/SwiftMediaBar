@@ -55,7 +55,7 @@ Click the menu bar item to see detailed information including:
 1. Clone this repository:
 
    ```bash
-   git clone https://github.com/yourusername/SwiftMediaBar.git
+   git clone https://github.com/bilipp/SwiftMediaBar.git
    cd SwiftMediaBar
    ```
 
@@ -276,7 +276,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### Version 1.0.0
+### Version 0.1.0
 
 - Initial release
 - Basic media information display in menu bar
