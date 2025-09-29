@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct MediaInfo: Codable {
+struct MediaInfo: Codable, Equatable {
   let composer: String?
   let title: String?
   let duration: Double?
@@ -81,6 +81,21 @@ struct MediaInfo: Codable {
 
   var hasArtwork: Bool {
     return artworkData != nil && !artworkData!.isEmpty
+  }
+
+  // MARK: - Equatable Implementation
+
+  static func == (lhs: MediaInfo, rhs: MediaInfo) -> Bool {
+    return lhs.composer == rhs.composer && lhs.title == rhs.title && lhs.duration == rhs.duration
+      && lhs.artworkData == rhs.artworkData && lhs.bundleIdentifier == rhs.bundleIdentifier
+      && lhs.uniqueIdentifier == rhs.uniqueIdentifier
+      && lhs.contentItemIdentifier == rhs.contentItemIdentifier && lhs.isMusicApp == rhs.isMusicApp
+      && lhs.elapsedTime == rhs.elapsedTime && lhs.queueIndex == rhs.queueIndex
+      && lhs.artworkMimeType == rhs.artworkMimeType && lhs.mediaType == rhs.mediaType
+      && lhs.playing == rhs.playing && lhs.timestamp == rhs.timestamp && lhs.artist == rhs.artist
+      && lhs.trackNumber == rhs.trackNumber && lhs.processIdentifier == rhs.processIdentifier
+      && lhs.genre == rhs.genre && lhs.totalQueueCount == rhs.totalQueueCount
+      && lhs.album == rhs.album && lhs.playbackRate == rhs.playbackRate
   }
 }
 

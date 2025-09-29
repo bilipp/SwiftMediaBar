@@ -46,21 +46,57 @@ class MediaService: ObservableObject {
   func fetchCurrentMedia() {
     guard !isLoading else { return }
 
-    isLoading = true
-    lastError = nil
+    // Only show loading state if we don't have any media data yet
+    let shouldShowLoading = currentMedia == .empty && lastError == nil
+    if shouldShowLoading {
+      isLoading = true
+    }
 
     Task {
       do {
         let mediaInfo = try await executeMediaControlCommand()
         await MainActor.run {
-          self.currentMedia = mediaInfo
-          self.isLoading = false
+          // Only update if the media info has actually changed
+          if self.currentMedia != mediaInfo {
+            #if DEBUG
+              print("📱 MediaService: Media info changed, updating UI")
+              print(
+                "   Previous: \(self.currentMedia.displayTitle) - \(self.currentMedia.displayArtist)"
+              )
+              print("   New: \(mediaInfo.displayTitle) - \(mediaInfo.displayArtist)")
+            #endif
+            self.currentMedia = mediaInfo
+            // Clear error only if we had one and now have valid data
+            if self.lastError != nil {
+              self.lastError = nil
+            }
+          } else {
+            #if DEBUG
+              print("📱 MediaService: Media info unchanged, skipping UI update")
+            #endif
+          }
+
+          // Only update loading state if we were showing it
+          if shouldShowLoading {
+            self.isLoading = false
+          }
         }
       } catch {
         await MainActor.run {
-          self.lastError = error.localizedDescription
-          self.currentMedia = .empty
-          self.isLoading = false
+          let errorMessage = error.localizedDescription
+          // Only update if the error message has changed or current media is not empty
+          if self.lastError != errorMessage || self.currentMedia != .empty {
+            #if DEBUG
+              print("📱 MediaService: Error occurred, updating error state")
+            #endif
+            self.lastError = errorMessage
+            self.currentMedia = .empty
+          }
+
+          // Only update loading state if we were showing it
+          if shouldShowLoading {
+            self.isLoading = false
+          }
         }
       }
     }
