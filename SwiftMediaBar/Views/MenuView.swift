@@ -81,7 +81,8 @@ struct MenuView: View {
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
     }
-    .frame(height: 80)
+    .frame(maxWidth: .infinity, minHeight: 80)
+    .multilineTextAlignment(.center)
   }
 
   // MARK: - Media Info View
