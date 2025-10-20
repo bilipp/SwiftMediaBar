@@ -18,6 +18,9 @@ A sleek macOS menu bar application that displays your currently playing media in
 
 ## Screenshots
 
+![Media Playing](screenshots/media-playing.png)  
+![No Media Playing](screenshots/no-media-playing.png)
+
 ### Menu Bar Display
 
 The app shows a compact view of your current media in the menu bar:
