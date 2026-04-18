@@ -142,8 +142,8 @@ class MediaService: ObservableObject {
   }
 
   private func parseMediaInfo(from data: Data) throws -> MediaInfo {
-    guard !data.isEmpty else {
-      throw MediaServiceError.emptyResponse
+    if data.isEmpty || String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "null" {
+      return .empty
     }
 
     // Try to parse as JSON
