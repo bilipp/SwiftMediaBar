@@ -280,16 +280,6 @@ This project is licensed under the MIT License.
 - Apple's MediaRemote framework - Underlying technology for media information access
 - The Swift and SwiftUI communities for excellent documentation and examples
 
-## Changelog
-
-### Version 0.1.0
-
-- Initial release
-- Basic media information display in menu bar
-- Detailed popover view with album artwork
-- Support for all major media applications
-- Integration with media-control 0.7.2
-
 ---
 
 **Note**: This app is not affiliated with Apple Inc. or any media application providers. It simply displays information that's already available through macOS's built-in media frameworks.
