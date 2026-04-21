@@ -114,7 +114,7 @@ Click the menu bar item to open a popover with detailed information:
 
 ### Quitting the App
 
-Click the menu bar item and select "Quit SwiftMediaBar" from the popover.
+Click the menu bar item and select "Quit" from the popover.
 
 ## Supported Applications
 
