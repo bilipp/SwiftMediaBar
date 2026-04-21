@@ -217,7 +217,7 @@ struct MenuView: View {
     }) {
       HStack {
         Image(systemName: "power")
-        Text("Quit SwiftMediaBar")
+        Text("Quit")
       }
       .frame(maxWidth: .infinity)
     }
