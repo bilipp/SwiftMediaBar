@@ -43,8 +43,15 @@ Click the menu bar item to see detailed information including:
 ## Requirements
 
 - **macOS**: Compatible with all macOS versions including the latest macOS Sonoma
-- **media-control**: Version 0.7.2 (automatically handles media information retrieval)
+- **media-control**: Version 0.7.2 (optional fallback dependency)
 - **Xcode**: 15.0 or later (for building from source)
+
+## How It Works
+
+SwiftMediaBar intelligently retrieves your media information using a two-tier priority system to ensure both performance and compatibility:
+
+1. **Native AppleScript (JXA)**: The app first attempts to fetch media information directly from Apple Music or Spotify using JavaScript for Automation (JXA). This is highly efficient and provides native integration without external dependencies.
+2. **media-control Fallback**: If the native approach fails (e.g., if neither Music nor Spotify is running, or if an error occurs), the app automatically falls back to the `media-control` command-line tool, providing broader support for other applications.
 
 ## Installation
 
@@ -53,7 +60,6 @@ Click the menu bar item to see detailed information including:
 1. Download the latest release from the [Releases](../../releases) page
 2. Unzip the downloaded file
 3. Move `SwiftMediaBar.app` to your Applications folder
-4. Install the required dependency (see below)
 
 ### Option 2: Build from Source
 
@@ -72,18 +78,12 @@ Click the menu bar item to see detailed information including:
 
 3. Build and run the project (⌘+R)
 
-### Installing media-control Dependency
+### Optional Dependency: media-control
 
-SwiftMediaBar requires the `media-control` command-line tool to function. Install it using Homebrew:
+While SwiftMediaBar works out of the box for Apple Music and Spotify, installing `media-control` adds support for a wider range of applications as a secondary fallback:
 
 ```bash
 brew install media-control
-```
-
-**Important**: Only version 0.7.2 of media-control has been tested and confirmed to work with SwiftMediaBar. If you encounter issues, ensure you're using this specific version:
-
-```bash
-brew install media-control@0.7.2
 ```
 
 ## Usage
@@ -122,12 +122,6 @@ SwiftMediaBar works with any application that provides media information through
 
 - **Apple Music**
 - **Spotify**
-- **iTunes**
-- **VLC**
-- **QuickTime Player**
-- **Safari** (for web-based media)
-- **Chrome** (for web-based media)
-- And many more!
 
 ## Configuration
 
@@ -152,39 +146,26 @@ Currently, SwiftMediaBar focuses on simplicity and doesn't require configuration
 
 #### "No Media Playing" when music is playing
 
-**Cause**: The media-control dependency might not be installed or accessible.
+**Cause**: The app may be failing to communicate with the active media player via AppleScript.
 
 **Solutions**:
 
-1. Verify media-control is installed:
-
-   ```bash
-   which media-control
-   ```
-
-   Should return: `/opt/homebrew/bin/media-control`
-
-2. Test media-control directly:
-
+1. Check if the media application (Music or Spotify) is running and playing.
+2. If using another application, ensure `media-control` is installed (`brew install media-control`) as it acts as the fallback mechanism.
+3. Test if `media-control` works manually:
    ```bash
    media-control get
    ```
 
-3. Reinstall media-control:
-   ```bash
-   brew uninstall media-control
-   brew install media-control
-   ```
-
 #### "Error" message in menu bar
 
-**Cause**: Permission issues or media-control execution problems.
+**Cause**: Permission issues or script execution problems.
 
 **Solutions**:
 
-1. Check if media-control has proper permissions
-2. Restart SwiftMediaBar
-3. Ensure your media application is actually playing content
+1. Ensure the app has necessary accessibility or automation permissions in **System Settings > Privacy & Security**.
+2. Restart SwiftMediaBar.
+3. If using an unsupported app, ensure `media-control` is installed.
 
 #### App doesn't appear in menu bar
 
