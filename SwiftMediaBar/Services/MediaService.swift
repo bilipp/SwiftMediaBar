@@ -220,21 +220,17 @@ class MediaService: ObservableObject {
           }
       }
 
-      // Fetch states for both apps
-      var musicInfo = getPlayerInfo("Music", "com.apple.Music");
-      var spotifyInfo = getPlayerInfo("Spotify", "com.spotify.client");
+      // Fetch states for Music first
+      var result = getPlayerInfo("Music", "com.apple.Music");
 
-      var result = null;
-
-      // Prioritize the app that is actively playing
-      if (musicInfo && musicInfo.playing) {
-          result = musicInfo;
-      } else if (spotifyInfo && spotifyInfo.playing) {
-          result = spotifyInfo;
-      } else if (musicInfo) {
-          result = musicInfo; // Fallback to paused Music
-      } else if (spotifyInfo) {
-          result = spotifyInfo; // Fallback to paused Spotify
+      // Only fetch Spotify if Music is not playing or not providing enough info
+      if (!result || !result.playing) {
+          var spotifyInfo = getPlayerInfo("Spotify", "com.spotify.client");
+          if (spotifyInfo) {
+              if (spotifyInfo.playing || !result) {
+                  result = spotifyInfo;
+              }
+          }
       }
 
       // Output the final JSON
