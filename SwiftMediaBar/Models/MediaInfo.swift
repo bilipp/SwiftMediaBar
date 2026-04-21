@@ -101,6 +101,19 @@ struct MediaInfo: Codable, Equatable {
 
 // Extension for handling empty or error states
 extension MediaInfo {
+  /// Compares media identity/state fields while ignoring frequently changing playback progress fields.
+  func isEquivalentForChangeDetection(to other: MediaInfo) -> Bool {
+    return composer == other.composer && title == other.title && duration == other.duration
+      && artworkData == other.artworkData && bundleIdentifier == other.bundleIdentifier
+      && uniqueIdentifier == other.uniqueIdentifier
+      && contentItemIdentifier == other.contentItemIdentifier && isMusicApp == other.isMusicApp
+      && queueIndex == other.queueIndex && artworkMimeType == other.artworkMimeType
+      && mediaType == other.mediaType && playing == other.playing && artist == other.artist
+      && trackNumber == other.trackNumber && processIdentifier == other.processIdentifier
+      && genre == other.genre && totalQueueCount == other.totalQueueCount && album == other.album
+      && playbackRate == other.playbackRate
+  }
+
   static let empty = MediaInfo(
     composer: nil,
     title: "No Media Playing",

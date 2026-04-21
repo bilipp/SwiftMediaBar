@@ -57,7 +57,7 @@ class MediaService: ObservableObject {
         let mediaInfo = try await executeMediaControlCommand()
         await MainActor.run {
           // Only update if the media info has actually changed
-          if self.currentMedia != mediaInfo {
+          if !self.currentMedia.isEquivalentForChangeDetection(to: mediaInfo) {
             #if DEBUG
               print("📱 MediaService: Media info changed, updating UI")
               print(
@@ -105,12 +105,152 @@ class MediaService: ObservableObject {
   // MARK: - Private Methods
 
   private func executeMediaControlCommand() async throws -> MediaInfo {
+    do {
+      return try await executeOsascriptFallback()
+    } catch {
+      // Fallback to media-control
+      #if DEBUG
+        print("📱 MediaService: osascript failed (\(error.localizedDescription)), trying media-control")
+      #endif
+      return try await withCheckedThrowingContinuation { continuation in
+        let process = Process()
+        let pipe = Pipe()
+
+        process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/media-control")
+        process.arguments = ["get"]
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        do {
+          try process.run()
+
+          let data = pipe.fileHandleForReading.readDataToEndOfFile()
+          process.waitUntilExit()
+
+          if process.terminationStatus == 0 {
+            do {
+              let mediaInfo = try parseMediaInfo(from: data)
+              continuation.resume(returning: mediaInfo)
+            } catch {
+              continuation.resume(
+                throwing: MediaServiceError.jsonParsingFailed(error.localizedDescription))
+            }
+          } else {
+            let errorString = String(data: data, encoding: .utf8) ?? "Unknown error"
+            continuation.resume(throwing: MediaServiceError.commandFailed(errorString))
+          }
+        } catch {
+          continuation.resume(
+            throwing: MediaServiceError.commandExecutionFailed(error.localizedDescription))
+        }
+      }
+    }
+  }
+
+  private func executeOsascriptFallback() async throws -> MediaInfo {
+    let script = """
+      var app = Application.currentApplication();
+      app.includeStandardAdditions = true;
+
+      // Helper function to extract info for a specific app
+      function getPlayerInfo(appName, bundleId) {
+          try {
+              var playerApp = Application(appName);
+              if (!playerApp.running()) return null;
+
+              var state = playerApp.playerState();
+              if (state !== "playing" && state !== "paused") return null;
+
+              var track = playerApp.currentTrack;
+              
+              function getProp(prop) {
+                  try {
+                      return track[prop]() || null;
+                  } catch (e) {
+                      return null;
+                  }
+              }
+
+              var pid = null;
+              try {
+                  pid = parseInt(app.doShellScript("pgrep -x " + appName + " | head -n 1"), 10) || null;
+              } catch(e) {}
+
+              var isPlaying = (state === "playing");
+              
+              // Handle duration difference (Spotify = milliseconds, Music = seconds)
+              var duration = getProp("duration");
+              if (duration !== null) {
+                  if (appName === "Spotify") {
+                      duration = Math.round(duration / 1000);
+                  } else {
+                      duration = Math.round(duration);
+                  }
+              }
+
+              // Handle unique ID mapping
+              var trackId = getProp("id");
+              if (appName === "Music") {
+                  trackId = getProp("databaseID") || trackId;
+              }
+
+              return {
+                  playbackRate: isPlaying ? 1 : 0,
+                  contentItemIdentifier: getProp("persistentID") || getProp("id"), // Spotify uses "id" (e.g., spotify:track:...)
+                  album: getProp("album"),
+                  trackNumber: getProp("trackNumber"),
+                  mediaType: "MRMediaRemoteMediaTypeMusic",
+                  elapsedTime: playerApp.playerPosition(),
+                  timestamp: new Date().toISOString(),
+                  playing: isPlaying,
+                  bundleIdentifier: bundleId,
+                  processIdentifier: pid,
+                  isMusicApp: true,
+                  artworkData: null,
+                  title: getProp("name"),
+                  uniqueIdentifier: trackId,
+                  artworkMimeType: "image/jpeg",
+                  duration: duration,
+                  artist: getProp("artist"),
+                  genre: getProp("genre"),       // Usually null for Spotify
+                  composer: getProp("composer")  // Usually null for Spotify
+              };
+          } catch (e) {
+              return null;
+          }
+      }
+
+      // Fetch states for both apps
+      var musicInfo = getPlayerInfo("Music", "com.apple.Music");
+      var spotifyInfo = getPlayerInfo("Spotify", "com.spotify.client");
+
+      var result = null;
+
+      // Prioritize the app that is actively playing
+      if (musicInfo && musicInfo.playing) {
+          result = musicInfo;
+      } else if (spotifyInfo && spotifyInfo.playing) {
+          result = spotifyInfo;
+      } else if (musicInfo) {
+          result = musicInfo; // Fallback to paused Music
+      } else if (spotifyInfo) {
+          result = spotifyInfo; // Fallback to paused Spotify
+      }
+
+      // Output the final JSON
+      if (result) {
+          JSON.stringify(result, null, 2);
+      } else {
+          JSON.stringify({ playing: false, status: "stopped or not running" }, null, 2);
+      }
+      """
+
     return try await withCheckedThrowingContinuation { continuation in
       let process = Process()
       let pipe = Pipe()
 
-      process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/media-control")
-      process.arguments = ["get"]
+      process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+      process.arguments = ["-l", "JavaScript", "-e", script]
       process.standardOutput = pipe
       process.standardError = pipe
 
@@ -121,7 +261,6 @@ class MediaService: ObservableObject {
         process.waitUntilExit()
 
         if process.terminationStatus == 0 {
-          // Success - parse JSON
           do {
             let mediaInfo = try parseMediaInfo(from: data)
             continuation.resume(returning: mediaInfo)
@@ -170,21 +309,15 @@ enum MediaServiceError: LocalizedError {
   case commandExecutionFailed(String)
   case commandFailed(String)
   case jsonParsingFailed(String)
-  case emptyResponse
-  case mediaControlNotFound
 
   var errorDescription: String? {
     switch self {
     case .commandExecutionFailed(let message):
-      return "Failed to execute media-control command: \(message)"
+      return "Failed to execute command: \(message)"
     case .commandFailed(let message):
-      return "media-control command failed: \(message)"
+      return "Command failed: \(message)"
     case .jsonParsingFailed(let message):
       return "Failed to parse media information: \(message)"
-    case .emptyResponse:
-      return "No response from media-control command"
-    case .mediaControlNotFound:
-      return "media-control command not found. Please ensure it's installed and in your PATH."
     }
   }
 }
