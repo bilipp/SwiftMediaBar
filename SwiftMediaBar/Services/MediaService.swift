@@ -74,14 +74,15 @@ class MediaService: ObservableObject {
               print("   New: \(mediaInfo.displayTitle) - \(mediaInfo.displayArtist)")
             #endif
             self.currentMedia = mediaInfo
-            // Clear error only if we had one and now have valid data
-            if self.lastError != nil {
-              self.lastError = nil
-            }
           } else {
             #if DEBUG
               print("📱 MediaService: Media info unchanged, skipping UI update")
             #endif
+          }
+
+          // A successful poll clears any previous error, even if the media is unchanged.
+          if self.lastError != nil {
+            self.lastError = nil
           }
 
           // Only update loading state if we were showing it

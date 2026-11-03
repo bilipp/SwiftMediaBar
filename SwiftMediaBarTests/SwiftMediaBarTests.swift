@@ -75,11 +75,36 @@ struct SwiftMediaBarTests {
     #expect(service.lastError?.contains("Media monitoring unavailable") == true)
   }
 
+  @Test(arguments: ["null", ""])
+  func clearsHelperErrorAfterSuccessfulIdlePoll(output: String) async throws {
+    let service = try await loadMedia(
+      appleScriptOutput: #"{"playing":false,"status":"stopped or not running"}"#,
+      mediaControlOutput: "Media monitoring unavailable",
+      mediaControlExitStatus: 1,
+      afterInitialFetch: { service, mediaControlURL in
+        try #require(service.lastError?.contains("Media monitoring unavailable") == true)
+        try #require(service.currentMedia == .empty)
+        try writeCommand(at: mediaControlURL, output: output, exitStatus: 0)
+
+        service.fetchCurrentMedia()
+        for _ in 0..<200 {
+          if service.lastError == nil { break }
+          try await Task.sleep(for: .milliseconds(10))
+        }
+      }
+    )
+
+    #expect(service.lastError == nil)
+    #expect(service.currentMedia == .empty)
+    #expect(service.statusText == "No Media Playing")
+  }
+
   private func loadMedia(
     appleScriptOutput: String,
     appleScriptExitStatus: Int = 0,
     mediaControlOutput: String? = #"{"title":"Example Song","artist":"Example Artist","bundleIdentifier":"com.monk-studio.jellyfin-music","playing":true}"#,
-    mediaControlExitStatus: Int = 0
+    mediaControlExitStatus: Int = 0,
+    afterInitialFetch: ((MediaService, URL) async throws -> Void)? = nil
   ) async throws -> MediaService {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -105,6 +130,7 @@ struct SwiftMediaBarTests {
       try await Task.sleep(for: .milliseconds(10))
     }
     try #require(!service.isLoading, "Media fetch did not finish within two seconds")
+    try await afterInitialFetch?(service, mediaControlURL)
     return service
   }
 
