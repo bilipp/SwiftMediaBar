@@ -132,13 +132,9 @@ SwiftMediaBar works out of the box with minimal configuration needed. The app au
 - Handles different media sources
 - Manages album artwork display
 
-### Customization Options
+### Menu bar text
 
-Currently, SwiftMediaBar focuses on simplicity and doesn't require configuration. Future versions may include:
-
-- Custom update intervals
-- Display format options
-- Menu bar text length preferences
+Click the menu bar item and use **Menu bar text** to choose **Artist first**, **Title first** or **Title only**. The display updates as soon as you choose an option, and the app remembers your choice when you reopen it. The default is **Artist first**.
 
 ## Troubleshooting
 

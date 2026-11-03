@@ -10,6 +10,7 @@ import SwiftUI
 
 struct MenuView: View {
   @ObservedObject var mediaService: MediaService
+  @ObservedObject var displayPreferences: MenuBarDisplayPreferences
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -24,6 +25,14 @@ struct MenuView: View {
       }
 
       Divider()
+
+      Picker("Menu bar text", selection: $displayPreferences.format) {
+        Text("Artist first").tag(MenuBarDisplayFormat.artistTitle)
+        Text("Title first").tag(MenuBarDisplayFormat.titleArtist)
+        Text("Title only").tag(MenuBarDisplayFormat.titleOnly)
+      }
+      .pickerStyle(.menu)
+      .controlSize(.small)
 
       quitButton
     }
@@ -277,5 +286,6 @@ struct MenuView: View {
         playbackRate: 1
       )
       return service
-    }())
+    }(),
+    displayPreferences: MenuBarDisplayPreferences())
 }

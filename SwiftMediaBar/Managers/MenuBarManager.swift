@@ -12,6 +12,7 @@ import SwiftUI
 class MenuBarManager: ObservableObject {
   private var statusItem: NSStatusItem?
   private var mediaService: MediaService
+  private let displayPreferences = MenuBarDisplayPreferences()
   private var cancellables = Set<AnyCancellable>()
   private var popover: NSPopover?
 
@@ -54,16 +55,16 @@ class MenuBarManager: ObservableObject {
     popover?.contentSize = NSSize(width: 300, height: 400)
     popover?.behavior = .transient
     popover?.contentViewController = NSHostingController(
-      rootView: MenuView(mediaService: mediaService)
+      rootView: MenuView(mediaService: mediaService, displayPreferences: displayPreferences)
     )
   }
 
   private func setupBindings() {
-    // Listen to media service updates
+    // Update for media changes and display preferences.
     mediaService.$currentMedia
-      .combineLatest(mediaService.$isLoading, mediaService.$lastError)
+      .combineLatest(mediaService.$isLoading, mediaService.$lastError, displayPreferences.$format)
       .receive(on: DispatchQueue.main)
-      .sink { [weak self] (media, isLoading, error) in
+      .sink { [weak self] _ in
         self?.updateStatusItemTitle()
       }
       .store(in: &cancellables)
@@ -106,7 +107,7 @@ class MenuBarManager: ObservableObject {
     } else if let error = mediaService.lastError {
       return " Error"
     } else if mediaService.hasValidMedia {
-      let truncatedText = mediaService.currentMedia.truncatedMenuBarText
+      let truncatedText = mediaService.currentMedia.truncatedMenuBarText(format: displayPreferences.format)
       return " \(truncatedText)"
     } else {
       return ""
