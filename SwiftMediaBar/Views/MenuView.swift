@@ -26,15 +26,23 @@ struct MenuView: View {
 
       Divider()
 
-      Picker("Menu bar text", selection: $displayPreferences.format) {
-        Text("Artist first").tag(MenuBarDisplayFormat.artistTitle)
-        Text("Title first").tag(MenuBarDisplayFormat.titleArtist)
-        Text("Title only").tag(MenuBarDisplayFormat.titleOnly)
-      }
-      .pickerStyle(.menu)
-      .controlSize(.small)
+      HStack {
+        Menu("Settings", systemImage: "gearshape") {
+          Picker("Menu bar text", selection: $displayPreferences.format) {
+            Text("Artist first").tag(MenuBarDisplayFormat.artistTitle)
+            Text("Title first").tag(MenuBarDisplayFormat.titleArtist)
+            Text("Title only").tag(MenuBarDisplayFormat.titleOnly)
+          }
+          .pickerStyle(.inline)
+        }
+        .labelStyle(.iconOnly)
+        .menuStyle(.borderlessButton)
+        .controlSize(.small)
+        .fixedSize()
+        .help("Settings")
 
-      quitButton
+        quitButton
+      }
     }
     .padding(16)
     .frame(width: 300)

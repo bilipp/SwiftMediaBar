@@ -134,7 +134,7 @@ SwiftMediaBar works out of the box with minimal configuration needed. The app au
 
 ### Menu bar text
 
-Click the menu bar item and use **Menu bar text** to choose **Artist first**, **Title first** or **Title only**. The display updates as soon as you choose an option, and the app remembers your choice when you reopen it. The default is **Artist first**.
+Click the menu bar item, then the **Settings** gear beside **Quit**. Under **Menu bar text**, choose **Artist first**, **Title first** or **Title only**. The display updates as soon as you choose an option, and the app remembers your choice when you reopen it. The default is **Artist first**.
 
 ## Troubleshooting
 
