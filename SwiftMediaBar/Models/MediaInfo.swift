@@ -44,12 +44,27 @@ struct MediaInfo: Codable, Equatable {
   }
 
   var menuBarText: String {
-    return "\(displayArtist) - \(displayTitle)"
+    return menuBarText(format: .artistTitle)
+  }
+
+  func menuBarText(format: MenuBarDisplayFormat) -> String {
+    switch format {
+    case .artistTitle:
+      return "\(displayArtist) - \(displayTitle)"
+    case .titleArtist:
+      return "\(displayTitle) - \(displayArtist)"
+    case .titleOnly:
+      return displayTitle
+    }
   }
 
   var truncatedMenuBarText: String {
+    return truncatedMenuBarText(format: .artistTitle)
+  }
+
+  func truncatedMenuBarText(format: MenuBarDisplayFormat) -> String {
     let maxLength = 50
-    let text = menuBarText
+    let text = menuBarText(format: format)
     if text.count > maxLength {
       return String(text.prefix(maxLength - 3)) + "..."
     }
