@@ -16,7 +16,15 @@ class MediaService: ObservableObject {
   private var timer: Timer?
   private let updateInterval: TimeInterval = 5.0
 
-  init() {
+  private let osascriptURL: URL
+  private let mediaControlURL: URL
+
+  init(
+    osascriptURL: URL = URL(fileURLWithPath: "/usr/bin/osascript"),
+    mediaControlURL: URL = URL(fileURLWithPath: "/opt/homebrew/bin/media-control")
+  ) {
+    self.osascriptURL = osascriptURL
+    self.mediaControlURL = mediaControlURL
     startPeriodicUpdates()
   }
 
@@ -66,14 +74,15 @@ class MediaService: ObservableObject {
               print("   New: \(mediaInfo.displayTitle) - \(mediaInfo.displayArtist)")
             #endif
             self.currentMedia = mediaInfo
-            // Clear error only if we had one and now have valid data
-            if self.lastError != nil {
-              self.lastError = nil
-            }
           } else {
             #if DEBUG
               print("📱 MediaService: Media info unchanged, skipping UI update")
             #endif
+          }
+
+          // A successful poll clears any previous error, even if the media is unchanged.
+          if self.lastError != nil {
+            self.lastError = nil
           }
 
           // Only update loading state if we were showing it
@@ -106,43 +115,51 @@ class MediaService: ObservableObject {
 
   private func executeMediaControlCommand() async throws -> MediaInfo {
     do {
-      return try await executeOsascriptFallback()
+      let mediaInfo = try await executeOsascriptFallback()
+      if mediaInfo.title != nil && mediaInfo != .empty {
+        return mediaInfo
+      }
+      // media-control is optional; remain idle if it is not installed.
+      if !FileManager.default.fileExists(atPath: mediaControlURL.path) {
+        return mediaInfo
+      }
     } catch {
-      // Fallback to media-control
       #if DEBUG
         print("📱 MediaService: osascript failed (\(error.localizedDescription)), trying media-control")
       #endif
-      return try await withCheckedThrowingContinuation { continuation in
-        let process = Process()
-        let pipe = Pipe()
+    }
 
-        process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/media-control")
-        process.arguments = ["get"]
-        process.standardOutput = pipe
-        process.standardError = pipe
+    // Also try media-control when AppleScript succeeds but finds no track.
+    return try await withCheckedThrowingContinuation { continuation in
+      let process = Process()
+      let pipe = Pipe()
 
-        do {
-          try process.run()
+      process.executableURL = mediaControlURL
+      process.arguments = ["get"]
+      process.standardOutput = pipe
+      process.standardError = pipe
 
-          let data = pipe.fileHandleForReading.readDataToEndOfFile()
-          process.waitUntilExit()
+      do {
+        try process.run()
 
-          if process.terminationStatus == 0 {
-            do {
-              let mediaInfo = try parseMediaInfo(from: data)
-              continuation.resume(returning: mediaInfo)
-            } catch {
-              continuation.resume(
-                throwing: MediaServiceError.jsonParsingFailed(error.localizedDescription))
-            }
-          } else {
-            let errorString = String(data: data, encoding: .utf8) ?? "Unknown error"
-            continuation.resume(throwing: MediaServiceError.commandFailed(errorString))
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+
+        if process.terminationStatus == 0 {
+          do {
+            let mediaInfo = try parseMediaInfo(from: data)
+            continuation.resume(returning: mediaInfo)
+          } catch {
+            continuation.resume(
+              throwing: MediaServiceError.jsonParsingFailed(error.localizedDescription))
           }
-        } catch {
-          continuation.resume(
-            throwing: MediaServiceError.commandExecutionFailed(error.localizedDescription))
+        } else {
+          let errorString = String(data: data, encoding: .utf8) ?? "Unknown error"
+          continuation.resume(throwing: MediaServiceError.commandFailed(errorString))
         }
+      } catch {
+        continuation.resume(
+          throwing: MediaServiceError.commandExecutionFailed(error.localizedDescription))
       }
     }
   }
@@ -245,7 +262,7 @@ class MediaService: ObservableObject {
       let process = Process()
       let pipe = Pipe()
 
-      process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+      process.executableURL = osascriptURL
       process.arguments = ["-l", "JavaScript", "-e", script]
       process.standardOutput = pipe
       process.standardError = pipe
